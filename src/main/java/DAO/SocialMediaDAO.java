@@ -15,7 +15,7 @@ import Util.ConnectionUtil;
 
 interface SocialMediaDAOInter {
     public Optional<Account> createAccount(String username, String password);
-    public Account login(String username, String password);
+    public Optional<Account> login(String username, String password);
     public Message createMessage(String messageBody, int posted_by);
     public List<Message> getAllMessages();
     public Message getMessageByID(int message_id);
@@ -63,7 +63,31 @@ public class SocialMediaDAO implements SocialMediaDAOInter {
                 accountOpt = Optional.of(account);
             }
         } catch(SQLException err) {
-            System.err.println(err);
+            System.err.println(err.getMessage());
+        }
+        return accountOpt;
+    }
+
+    @Override
+    public Optional<Account> login(String username, String password) {
+        Optional<Account> accountOpt = Optional.empty();
+        try {
+            Connection conn = ConnectionUtil.getConnection();
+            String sql = "SELECT * FROM account WHERE username = ?";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, username);
+            ResultSet rs = ps.executeQuery();
+            while(rs.next()) {
+                if(rs.getString(password) == password) {
+                    Account account = new Account();
+                    account.setUsername(username);
+                    account.setPassword(password);
+                    account.setAccount_id(rs.getInt("account_id"));
+                    accountOpt = Optional.of(account);
+                }
+            }
+        } catch (SQLException err) {
+            System.err.println(err.getMessage());
         }
         return accountOpt;
     }
