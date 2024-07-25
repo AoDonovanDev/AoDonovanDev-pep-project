@@ -16,7 +16,7 @@ import Util.ConnectionUtil;
 interface SocialMediaDAOInter {
     public Optional<Account> createAccount(String username, String password);
     public Optional<Account> login(String username, String password);
-    public Message createMessage(String messageBody, int posted_by);
+    public Optional<Message> createMessage(String messageBody, int posted_by, long time_posted_epoch);
     public List<Message> getAllMessages();
     public Message getMessageByID(int message_id);
     public Message deleteMessage(int message_id);
@@ -90,6 +90,30 @@ public class SocialMediaDAO implements SocialMediaDAOInter {
             System.err.println(err.getMessage());
         }
         return accountOpt;
+    }
+
+    @Override
+    public Optional<Message> createMessage(String message_text, int posted_by, long time_posted_epoch) {
+        Optional<Message> msgOpt = Optional.empty();
+        try {
+            Connection conn = ConnectionUtil.getConnection();
+            String sql = "INSERT INTO message message_text, posted_by, time_posted_epoch VALUES (?, ?, ?)";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, message_text);
+            ps.setInt(1, posted_by);
+            ps.setLong(2, time_posted_epoch);
+            ResultSet rs = ps.executeQuery();
+            while(rs.next()){
+                Message msg = new Message();
+                msg.setMessage_id(rs.getInt("message_id"));
+                msg.setMessage_text(rs.getString("message_text"));
+                msg.setPosted_by(rs.getInt("posted_by"));
+                msg.setTime_posted_epoch(rs.getLong("time_posted_epoch"));
+            }
+        } catch (SQLException err) {
+            System.err.println(err.getMessage());
+        }
+        return msgOpt;
     }
 }
 
