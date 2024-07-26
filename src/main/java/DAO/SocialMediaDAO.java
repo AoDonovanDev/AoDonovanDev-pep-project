@@ -21,7 +21,7 @@ interface SocialMediaDAOInter {
     public List<Message> getAllMessages();
     public Optional<Message> getMessageByID(int message_id);
     public void deleteMessage(int message_id);
-    public Message updateMessage(int message_id);
+    public void updateMessage(int message_id, String message_text);
     public List<Message> getMessagesByUser(int posted_by);
     public Boolean accountExists(String username);
     public Boolean messageExists(int message_id);
@@ -192,6 +192,46 @@ public class SocialMediaDAO implements SocialMediaDAOInter {
         } catch (SQLException err) {
             System.err.println(err.getMessage()); 
         }
+    }
+
+    @Override
+    public void updateMessage(int message_id, String message_text) {
+
+        try {
+            Connection conn = ConnectionUtil.getConnection();
+            String sql = "UPDATE message SET message_text = ? WHERE message_id = ?";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, message_text);
+            ps.setInt(2, message_id);
+            ps.executeUpdate();
+        } catch (SQLException err) {
+            System.err.println(err.getMessage());
+        }
+    }
+
+    @Override
+    public List<Message> getMessagesByUser(int posted_by) {
+        List<Message> messagesByUser = new ArrayList<Message>();
+
+        try {
+            Connection conn = ConnectionUtil.getConnection();
+            String sql = "SELECT * FROM message WHERE posted_by = ?";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, posted_by);
+            ResultSet rs = ps.executeQuery();
+            while(rs.next()) {
+                Message msg = new Message();
+                msg.setPosted_by(rs.getInt("posted_by"));
+                msg.setMessage_id(rs.getInt("message_id"));
+                msg.setMessage_text(rs.getString("message_text"));
+                msg.setTime_posted_epoch(rs.getLong("time_posted_epoch"));
+                messagesByUser.add(msg);
+            }
+        } catch (SQLException err) {
+            System.err.println(err.getMessage());
+        }
+
+        return messagesByUser;
     }
 }
 
