@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,8 +19,8 @@ interface SocialMediaDAOInter {
     public Optional<Account> login(String username, String password);
     public Optional<Message> createMessage(String messageBody, int posted_by, long time_posted_epoch);
     public List<Message> getAllMessages();
-    public Message getMessageByID(int message_id);
-    public Message deleteMessage(int message_id);
+    public Optional<Message> getMessageByID(int message_id);
+    public void deleteMessage(int message_id);
     public Message updateMessage(int message_id);
     public List<Message> getMessagesByUser(int posted_by);
     public Boolean accountExists(String username);
@@ -39,6 +40,21 @@ public class SocialMediaDAO implements SocialMediaDAOInter {
             ResultSet rs = ps.executeQuery();
             return rs.next();
         } catch(SQLException err){
+            System.err.println(err.getMessage());
+        }
+        return false;
+    }
+
+    @Override
+    public Boolean messageExists(int message_id) {
+        try {
+            Connection conn = ConnectionUtil.getConnection();
+            String sql = "SELECT * FROM message WHERE message_id = ?";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, message_id);
+            ResultSet rs = ps.executeQuery();
+            return rs.next();
+        } catch (SQLException err) {
             System.err.println(err.getMessage());
         }
         return false;
@@ -114,6 +130,68 @@ public class SocialMediaDAO implements SocialMediaDAOInter {
             System.err.println(err.getMessage());
         }
         return msgOpt;
+    }
+
+    @Override
+    public List<Message> getAllMessages() {
+        List<Message> allMessages = new ArrayList<Message>();
+
+        try {
+            Connection conn = ConnectionUtil.getConnection();
+            String sql = "SELECT * FROM message;";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+            while(rs.next()){
+                Message msg = new Message();
+                msg.setPosted_by(rs.getInt("posted_by"));
+                msg.setMessage_id(rs.getInt("message_id"));
+                msg.setMessage_text(rs.getString("message_text"));
+                msg.setTime_posted_epoch(rs.getLong("time_posted_epoch"));
+                allMessages.add(msg);
+            }
+        } catch (SQLException err) {
+            System.err.println(err.getMessage());
+        }
+
+        return allMessages;
+    }
+
+    @Override
+    public Optional<Message> getMessageByID(int message_id) {
+        Optional<Message> msgOpt = Optional.empty();
+
+        try {
+            Connection conn = ConnectionUtil.getConnection();
+            String sql = "SELECT * FROM message WHERE message_id = ?";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, message_id);
+            ResultSet rs = ps.executeQuery();
+            while(rs.next()){
+                Message msg = new Message();
+                msg.setMessage_id(message_id);
+                msg.setMessage_text(rs.getString("message_text"));
+                msg.setPosted_by(rs.getInt("posted_by"));
+                msg.setTime_posted_epoch(rs.getLong("time_posted_epoch"));
+            }
+
+        } catch (SQLException err) {
+            System.err.println(err.getMessage());
+        }
+
+        return msgOpt;
+    }
+
+    @Override
+    public void deleteMessage(int message_id) {
+        try {
+            Connection conn = ConnectionUtil.getConnection();
+            String sql = "DELETE * FROM message WHERE message_id = ?";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, message_id);
+            ps.execute();
+        } catch (SQLException err) {
+            System.err.println(err.getMessage()); 
+        }
     }
 }
 
