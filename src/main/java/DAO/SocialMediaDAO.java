@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import javax.swing.text.html.Option;
 
 import Model.Account;
 import Model.Message;
@@ -30,7 +29,7 @@ interface SocialMediaDAOInter {
 
 public class SocialMediaDAO implements SocialMediaDAOInter {
 
-    @Override
+    
     public Boolean accountExists(String username) {
         try {
             Connection conn = ConnectionUtil.getConnection();
