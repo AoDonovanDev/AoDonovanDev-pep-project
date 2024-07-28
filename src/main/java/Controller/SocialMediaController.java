@@ -1,5 +1,6 @@
 package Controller;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,7 +38,7 @@ public class SocialMediaController {
         app.get("messages/{message_id}", this::getMessageHandler);
         app.delete("messages/{message_id}", this::deleteMessageHandler);
         app.patch("messages/{message_id}", this::updateMessageHandler);
-        app.get("accouts/{account_id}/messages", this::getMessagesByUserHandler);
+        app.get("accounts/{account_id}/messages", this::getMessagesByUserHandler);
 
         return app;
     }
@@ -127,10 +128,10 @@ public class SocialMediaController {
     private void getMessageHandler(Context context) {
         ObjectMapper om = new ObjectMapper();
         Optional<Message> msgOpt = Optional.empty();
-        String message_id = context.pathParam("message_id");
+        int message_id = Integer.parseInt(context.pathParam("message_id"));
 
         try {
-            msgOpt = SocialMediaService.getMessageById(Integer.parseInt(message_id));
+            msgOpt = SocialMediaService.getMessageById(message_id);
             if(msgOpt.isPresent()) {
                 String json = om.writeValueAsString(msgOpt.get());
                 context.status(200).json(json);
@@ -142,14 +143,54 @@ public class SocialMediaController {
     }
 
     private void deleteMessageHandler(Context context) {
-        context.json("delete a message");
+        ObjectMapper om = new ObjectMapper();
+        Optional<Message> msgOpt = Optional.empty();
+        int message_id = Integer.parseInt(context.pathParam("message_id"));
+
+        try {
+            msgOpt = SocialMediaService.deleteMessage(message_id);
+            if(msgOpt.isPresent()) {
+                String json = om.writeValueAsString(msgOpt.get());
+                context.status(200).json(json);
+            }
+        } catch (JsonProcessingException err) {
+            System.err.println(err.getMessage());
+        }
+        context.status(200);
     }
 
     private void updateMessageHandler(Context context) {
-        context.json("update a message");
+        ObjectMapper om = new ObjectMapper();
+        Optional<Message> msgOpt = Optional.empty();
+        int message_id = Integer.parseInt(context.pathParam("message_id"));
+        String body = context.body();
+
+        try {
+            Message msg = om.readValue(body, Message.class);
+            msgOpt = SocialMediaService.updateMessage(message_id, msg.getMessage_text());
+            if(msgOpt.isPresent()) {
+                String json = om.writeValueAsString(msgOpt.get());
+                context.status(200).json(json);
+            } else {
+                context.status(400);
+            }
+        } catch (JsonProcessingException err) {
+            System.err.println(err.getMessage());
+            context.status(400);
+        }
     }
 
     private void getMessagesByUserHandler(Context context) {
-        context.json("get a users messages");
+        ObjectMapper om = new ObjectMapper();
+        int account_id = Integer.parseInt(context.pathParam("account_id"));
+        List<Message> messagesByUser = new ArrayList<Message>();
+        try {
+            messagesByUser = SocialMediaService.getMessagesByUser(account_id);
+            String json = om.writeValueAsString(messagesByUser);
+            context.status(200).json(json);
+        } catch (JsonProcessingException err) {
+            System.err.println(err.getMessage());
+            context.status(200);
+        }
     }
 }

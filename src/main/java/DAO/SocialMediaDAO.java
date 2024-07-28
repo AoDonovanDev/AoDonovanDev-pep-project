@@ -184,7 +184,6 @@ public class SocialMediaDAO implements SocialMediaDAOInter {
         } catch (SQLException err) {
             System.err.println(err.getMessage());
         }
-        System.err.println("[data layer - getById] msgOpt: " + msgOpt.toString());
         return msgOpt;
     }
 
@@ -192,10 +191,10 @@ public class SocialMediaDAO implements SocialMediaDAOInter {
     public void deleteMessage(int message_id) {
         try {
             Connection conn = ConnectionUtil.getConnection();
-            String sql = "DELETE * FROM message WHERE message_id = ?";
+            String sql = "DELETE FROM message WHERE message_id = ?";
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setInt(1, message_id);
-            ps.execute();
+            ps.executeUpdate();
         } catch (SQLException err) {
             System.err.println(err.getMessage()); 
         }
