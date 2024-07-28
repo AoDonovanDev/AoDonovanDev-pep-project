@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.sql.Statement;
 
 
 import Model.Account;
@@ -14,7 +15,7 @@ import Model.Message;
 import Util.ConnectionUtil;
 
 interface SocialMediaDAOInter {
-    public Optional<Account> createAccount(String username, String password);
+    public void createAccount(String username, String password);
     public Optional<Account> login(String username, String password);
     public Optional<Message> createMessage(String messageBody, int posted_by, long time_posted_epoch);
     public List<Message> getAllMessages();
@@ -60,27 +61,19 @@ public class SocialMediaDAO implements SocialMediaDAOInter {
     }
 
     @Override
-    public Optional<Account> createAccount(String username, String password) {
+    public void createAccount(String username, String password) {
         //passwords are not hashed :(((((( this makes me sad.
-        Optional<Account> accountOpt = Optional.empty();
         try {
             Connection conn = ConnectionUtil.getConnection();
-            String sql = "INSERT INTO account (username, password) VALUES (?, ?)";
+            String sql = "INSERT INTO account (username, password) VALUES (?, ?);";
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setString(1, username);
             ps.setString(2, password);
-            ResultSet accResult = ps.executeQuery();
-            while(accResult.next()) {
-                Account account = new Account();
-                account.setAccount_id(accResult.getInt("account_id)"));
-                account.setUsername(accResult.getString(username));
-                account.setPassword(accResult.getString(password));
-                accountOpt = Optional.of(account);
-            }
+            System.err.println(ps.toString());
+            ps.execute();
         } catch(SQLException err) {
-            System.err.println(err.getMessage());
+            System.err.println("the sql is fucking up: " + err.getMessage());
         }
-        return accountOpt;
     }
 
     @Override
@@ -93,7 +86,7 @@ public class SocialMediaDAO implements SocialMediaDAOInter {
             ps.setString(1, username);
             ResultSet rs = ps.executeQuery();
             while(rs.next()) {
-                if(rs.getString(password) == password) {
+                if(rs.getString("password").compareTo(password) == 0) {
                     Account account = new Account();
                     account.setUsername(username);
                     account.setPassword(password);
@@ -102,28 +95,32 @@ public class SocialMediaDAO implements SocialMediaDAOInter {
                 }
             }
         } catch (SQLException err) {
-            System.err.println(err.getMessage());
+            System.err.println("error in login sql: " + err.getMessage());
         }
         return accountOpt;
     }
 
     @Override
     public Optional<Message> createMessage(String message_text, int posted_by, long time_posted_epoch) {
+        //this should actually return an int of the message id
         Optional<Message> msgOpt = Optional.empty();
         try {
             Connection conn = ConnectionUtil.getConnection();
-            String sql = "INSERT INTO message message_text, posted_by, time_posted_epoch VALUES (?, ?, ?)";
-            PreparedStatement ps = conn.prepareStatement(sql);
+            String sql = "INSERT INTO message (message_text, posted_by, time_posted_epoch) VALUES (?, ?, ?)";
+            PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             ps.setString(1, message_text);
-            ps.setInt(1, posted_by);
-            ps.setLong(2, time_posted_epoch);
-            ResultSet rs = ps.executeQuery();
+            ps.setInt(2, posted_by);
+            ps.setLong(3, time_posted_epoch);
+            ps.executeUpdate();
+            System.err.println("[data layer]: " + ps.toString());
+            ResultSet rs = ps.getGeneratedKeys();
             while(rs.next()){
+                /* System.err.println("[data layer] rs val: " + rs.toString());
                 Message msg = new Message();
                 msg.setMessage_id(rs.getInt("message_id"));
                 msg.setMessage_text(rs.getString("message_text"));
                 msg.setPosted_by(rs.getInt("posted_by"));
-                msg.setTime_posted_epoch(rs.getLong("time_posted_epoch"));
+                msg.setTime_posted_epoch(rs.getLong("time_posted_epoch")); */
             }
         } catch (SQLException err) {
             System.err.println(err.getMessage());

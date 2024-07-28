@@ -1,5 +1,13 @@
 package Controller;
 
+import java.util.Optional;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import Model.Account;
+import Model.Message;
+import Service.SocialMediaService;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 
@@ -38,15 +46,65 @@ public class SocialMediaController {
     }
 
     private void registerHandler(Context context) {
-        context.json("register");
+        ObjectMapper om = new ObjectMapper();
+        String body = context.body();
+        Optional<Account> accOpt = Optional.empty();
+        
+        try {
+            Account acc = om.readValue(body, Account.class);
+            accOpt = SocialMediaService.createAccount(acc.getUsername(), acc.getPassword());
+            if(accOpt.isPresent()) {
+                String json = om.writeValueAsString(accOpt.get());
+                context.status(200).json(json);
+            } else {
+                context.status(400);
+            }
+        } catch (JsonProcessingException err) {
+            System.err.println(err.getMessage());
+            context.status(400);
+        }
+        
     }
 
     private void loginHandler(Context context) {
-        context.json("login");
+        ObjectMapper om = new ObjectMapper();
+        String body = context.body();
+        Optional<Account> accOpt = Optional.empty();
+
+        try {
+            Account acc = om.readValue(body, Account.class);
+            accOpt = SocialMediaService.login(acc.getUsername(), acc.getPassword());
+            if(accOpt.isPresent()) {
+                String json = om.writeValueAsString(accOpt.get());
+                context.status(200).json(json);
+            } else {
+                System.err.println("acc not present in route handler");
+                context.status(401);
+            }
+        } catch (JsonProcessingException err) {
+            System.err.println(err.getMessage());
+            context.status(401);
+        }
     }
 
     private void createMessageHandler(Context context) {
-        context.json("create message");
+        ObjectMapper om = new ObjectMapper();
+        String body = context.body();
+        Optional<Message> msgOpt = Optional.empty();
+
+        try {
+            Message msg = om.readValue(body, Message.class);
+            msgOpt = SocialMediaService.createMessage(msg.getMessage_text(), msg.getPosted_by(), msg.getTime_posted_epoch());
+            if(msgOpt.isPresent()) {
+                String json = om.writeValueAsString(msgOpt.get());
+                context.status(200).json(json);
+            } else {
+                context.status(400);
+            }
+        } catch (JsonProcessingException err) {
+            System.err.println(err.getMessage());
+            context.status(400);
+        }
     }
 
     private void getAllMessagesHandler(Context context) {
