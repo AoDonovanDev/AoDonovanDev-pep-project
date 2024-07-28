@@ -1,5 +1,6 @@
 package Controller;
 
+import java.util.List;
 import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -22,8 +23,12 @@ public class SocialMediaController {
      * suite must receive a Javalin object from this method.
      * @return a Javalin app object which defines the behavior of the Javalin controller.
      */
+
+    
     public Javalin startAPI() {
         Javalin app = Javalin.create();
+        
+
         app.get("example-endpoint", this::exampleHandler);
         app.post("register", this::registerHandler);
         app.post("login", this::loginHandler);
@@ -108,11 +113,32 @@ public class SocialMediaController {
     }
 
     private void getAllMessagesHandler(Context context) {
-        context.json("get all msgs");
+        ObjectMapper om = new ObjectMapper();
+        try {
+            List<Message> allMsgs = SocialMediaService.getAllMessages();
+            String json = om.writeValueAsString(allMsgs);
+            context.status(200).json(json);
+        } catch (Exception err) {
+            System.err.println(err.getMessage());
+        }
+        context.status(200);
     }
 
     private void getMessageHandler(Context context) {
-        context.json("get a message");
+        ObjectMapper om = new ObjectMapper();
+        Optional<Message> msgOpt = Optional.empty();
+        String message_id = context.pathParam("message_id");
+
+        try {
+            msgOpt = SocialMediaService.getMessageById(Integer.parseInt(message_id));
+            if(msgOpt.isPresent()) {
+                String json = om.writeValueAsString(msgOpt.get());
+                context.status(200).json(json);
+            }
+        } catch (JsonProcessingException err) {
+            System.err.println(err.getMessage());
+        }
+        context.status(200);
     }
 
     private void deleteMessageHandler(Context context) {
