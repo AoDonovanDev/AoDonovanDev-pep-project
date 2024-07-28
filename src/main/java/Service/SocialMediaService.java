@@ -57,7 +57,7 @@ public class SocialMediaService {
     }
 
     public static Optional<Message> updateMessage(int message_id, String message_text) {
-        if(message_text.length() > 255) {
+        if(message_text.length() > 255 || message_text.length() == 0) {
             return Optional.empty();
         }
         dao.updateMessage(message_id, message_text);
