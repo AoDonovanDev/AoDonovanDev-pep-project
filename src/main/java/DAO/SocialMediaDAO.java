@@ -24,19 +24,35 @@ interface SocialMediaDAOInter {
     public void updateMessage(int message_id, String message_text);
     public List<Message> getMessagesByUser(int posted_by);
     public Boolean accountExists(String username);
+    public Boolean accountExists(int account_id);
     public Boolean messageExists(int message_id);
 }
 
 
 public class SocialMediaDAO implements SocialMediaDAOInter {
 
-    
+    @Override
     public Boolean accountExists(String username) {
         try {
             Connection conn = ConnectionUtil.getConnection();
             String sql = "SELECT * FROM account WHERE username = ?";
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setString(1, username);
+            ResultSet rs = ps.executeQuery();
+            return rs.next();
+        } catch(SQLException err){
+            System.err.println(err.getMessage());
+        }
+        return false;
+    }
+
+    @Override
+    public Boolean accountExists(int account_id) {
+        try {
+            Connection conn = ConnectionUtil.getConnection();
+            String sql = "SELECT * FROM account WHERE account_id = ?";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, account_id);
             ResultSet rs = ps.executeQuery();
             return rs.next();
         } catch(SQLException err){
@@ -112,10 +128,8 @@ public class SocialMediaDAO implements SocialMediaDAOInter {
             ps.setInt(2, posted_by);
             ps.setLong(3, time_posted_epoch);
             ps.executeUpdate();
-            System.err.println("[data layer]: " + ps.toString());
             ResultSet rs = ps.getGeneratedKeys();
             while(rs.next()){
-                System.err.println("[data layer] rs val: " + rs.toString());
                 msgIdOpt = Optional.of(rs.getInt("message_id"));
             }
         } catch (SQLException err) {
@@ -164,12 +178,13 @@ public class SocialMediaDAO implements SocialMediaDAOInter {
                 msg.setMessage_text(rs.getString("message_text"));
                 msg.setPosted_by(rs.getInt("posted_by"));
                 msg.setTime_posted_epoch(rs.getLong("time_posted_epoch"));
+                msgOpt = Optional.of(msg);
             }
 
         } catch (SQLException err) {
             System.err.println(err.getMessage());
         }
-
+        System.err.println("[data layer - getById] msgOpt: " + msgOpt.toString());
         return msgOpt;
     }
 

@@ -30,8 +30,8 @@ public class SocialMediaService {
     }
 
     public static Optional<Message> createMessage(String message_text, int posted_by, long time_posted_epoch) {
-        if(message_text.length() > 255) {
-            System.err.println("[service layer] message is too long");
+        if(message_text.length() > 255 || message_text.length() == 0 || !dao.accountExists(posted_by)) {
+            System.err.println("[service layer] message or account_id is invalid");
             return Optional.empty();
         }
         Optional<Integer> msgIdOpt =  dao.createMessage(message_text, posted_by, time_posted_epoch);
