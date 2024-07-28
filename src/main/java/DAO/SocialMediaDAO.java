@@ -17,7 +17,7 @@ import Util.ConnectionUtil;
 interface SocialMediaDAOInter {
     public void createAccount(String username, String password);
     public Optional<Account> login(String username, String password);
-    public Optional<Message> createMessage(String messageBody, int posted_by, long time_posted_epoch);
+    public Optional<Integer> createMessage(String messageBody, int posted_by, long time_posted_epoch);
     public List<Message> getAllMessages();
     public Optional<Message> getMessageByID(int message_id);
     public void deleteMessage(int message_id);
@@ -101,9 +101,9 @@ public class SocialMediaDAO implements SocialMediaDAOInter {
     }
 
     @Override
-    public Optional<Message> createMessage(String message_text, int posted_by, long time_posted_epoch) {
+    public Optional<Integer> createMessage(String message_text, int posted_by, long time_posted_epoch) {
         //this should actually return an int of the message id
-        Optional<Message> msgOpt = Optional.empty();
+        Optional<Integer> msgIdOpt = Optional.empty();
         try {
             Connection conn = ConnectionUtil.getConnection();
             String sql = "INSERT INTO message (message_text, posted_by, time_posted_epoch) VALUES (?, ?, ?)";
@@ -115,17 +115,13 @@ public class SocialMediaDAO implements SocialMediaDAOInter {
             System.err.println("[data layer]: " + ps.toString());
             ResultSet rs = ps.getGeneratedKeys();
             while(rs.next()){
-                /* System.err.println("[data layer] rs val: " + rs.toString());
-                Message msg = new Message();
-                msg.setMessage_id(rs.getInt("message_id"));
-                msg.setMessage_text(rs.getString("message_text"));
-                msg.setPosted_by(rs.getInt("posted_by"));
-                msg.setTime_posted_epoch(rs.getLong("time_posted_epoch")); */
+                System.err.println("[data layer] rs val: " + rs.toString());
+                msgIdOpt = Optional.of(rs.getInt("message_id"));
             }
         } catch (SQLException err) {
             System.err.println(err.getMessage());
         }
-        return msgOpt;
+        return msgIdOpt;
     }
 
     @Override

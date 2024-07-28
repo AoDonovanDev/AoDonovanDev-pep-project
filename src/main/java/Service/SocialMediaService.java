@@ -32,9 +32,14 @@ public class SocialMediaService {
     public static Optional<Message> createMessage(String message_text, int posted_by, long time_posted_epoch) {
         if(message_text.length() > 255) {
             System.err.println("[service layer] message is too long");
-            Optional.empty();
+            return Optional.empty();
         }
-        return dao.createMessage(message_text, posted_by, time_posted_epoch);
+        Optional<Integer> msgIdOpt =  dao.createMessage(message_text, posted_by, time_posted_epoch);
+        if(msgIdOpt.isPresent()) {
+            return dao.getMessageByID(msgIdOpt.get());
+        } else {
+            return Optional.empty();
+        }
     }
 
     public static List<Message> getAllMessages() {
